@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&family=Scheherazade+New:wght@400;700&family=Sora:wght@300;400;600;700;800&family=Vazirmatn:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=1.7">
+<link rel="stylesheet" href="styles.css?v=1.8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b18'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23e6b95c' stroke-width='2.5'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%234fd1b5'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -228,11 +228,14 @@
         </div>
       </div>
       <div class="ai-keyline" id="ai-baseline"></div>
+      <div class="set-row"><label for="ai-deep">Deep reasoning</label><label class="switch"><input id="ai-deep" type="checkbox" data-action="ai-deep"><i></i></label></div>
+      <p class="set-note"><svg class="ic"><use href="#i-spark"/></svg>Deep reasoning asks reasoning-capable models for a longer answer and shows their thinking above it. Slower, but deeper on root and grammar.</p>
       <div class="ai-probe">
         <button class="btn sm" data-action="ai-test" id="ai-test-btn">Test connection</button>
         <span id="ai-testline"></span>
       </div>
-      <p class="set-note"><svg class="ic"><use href="#i-info"/></svg>Test connection checks the same three things the spark button uses — the host, your key, and one tiny prompt on the active model.</p>
+      <details class="ai-raw" id="ai-testraw" hidden><summary>Exact response from the server</summary><pre id="ai-testraw-pre"></pre></details>
+      <p class="set-note"><svg class="ic"><use href="#i-info"/></svg>Test connection checks the same layers the spark button uses — the host, your key, and one tiny prompt on the active model — and quotes the exact status and body when any of them fails.</p>
       <div class="ai-models-head"><b>Models</b><button class="btn sm" data-action="ai-add">
         <svg class="ic"><use href="#i-spark"/></svg>Add model</button></div>
       <div class="ai-models" id="ai-models"></div>
@@ -250,7 +253,7 @@
       <p class="set-note"><svg class="ic"><use href="#i-lock"/></svg>Guest mode keeps everything in this browser. Sign in to carry it across devices.</p>
     </section>
 
-    <p class="drawer-foot">Nūr · build <span id="build-n">1.7</span></p>
+    <p class="drawer-foot">Nūr · build <span id="build-n">1.8</span></p>
   </div>
 </aside>
 
@@ -334,6 +337,6 @@
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 
 <noscript><p style="padding:40px;text-align:center">Nūr needs JavaScript to display the duʿāʾ.</p></noscript>
-<script src="app.js?v=1.7"></script>
+<script src="app.js?v=1.8"></script>
 </body>
 </html>

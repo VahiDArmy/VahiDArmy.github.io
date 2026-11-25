@@ -776,7 +776,32 @@ body.no-motion *,body.no-motion *::before,body.no-motion *::after{animation:none
 .wp-load{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:11.5px;font-family:var(--ui)}
 .wp-load i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line2);border-top-color:var(--acc);animation:wpSpin .8s linear infinite;flex:none}
 @keyframes wpSpin{to{transform:rotate(360deg)}}
-.wp-err{color:var(--danger);font-size:11.5px;line-height:1.75;font-family:var(--ui)}
+.wp-err{color:var(--ink);font-size:11.5px;line-height:1.7;font-family:var(--ui);text-align:left;display:flex;flex-direction:column;gap:6px}
+.wp-err .we-head{color:var(--danger);font-weight:600;font-size:11.5px;line-height:1.5;overflow-wrap:anywhere}
+.wp-err .we-msg{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.6;
+  color:var(--ink);background:color-mix(in srgb,var(--danger) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--danger) 26%,transparent);border-radius:8px;
+  padding:6px 8px;white-space:pre-wrap;overflow-wrap:anywhere
+}
+.wp-err .we-meta{font-size:10px;color:var(--mut);overflow-wrap:anywhere}
+.wp-err .we-hint{color:var(--ink);opacity:.82;line-height:1.65}
+.we-raw summary{cursor:pointer;font-size:10px;color:var(--mut);width:max-content;max-width:100%}
+.we-raw summary:hover{color:var(--acc)}
+.we-raw pre{margin:6px 0 0;max-height:160px;overflow:auto;font-size:10px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--mut)}
+.wp-live{display:flex;flex-direction:column;gap:8px}
+.ai-why{
+  border:1px solid var(--line2);border-radius:10px;padding:5px 8px;
+  font-family:var(--ui);font-size:10.5px;color:var(--mut);text-align:left
+}
+.ai-why summary{cursor:pointer;letter-spacing:.02em;line-height:1.6}
+.ai-why summary:hover{color:var(--acc)}
+.ai-why-body{margin-top:5px;max-height:140px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;opacity:.86;font-size:10.5px}
+.ai-caret{display:inline-block;width:5px;height:11px;background:var(--acc);vertical-align:-1px;margin-inline-start:3px;animation:aiBlink 1s steps(1) infinite}
+@keyframes aiBlink{50%{opacity:0}}
+.ai-raw{margin:0 0 13px;font-family:var(--ui)}
+.ai-raw summary{cursor:pointer;font-size:10.5px;color:var(--danger);line-height:1.6}
+.ai-raw pre{margin:6px 0 0;max-height:150px;overflow:auto;font-size:10px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--mut)}
 
 /* model manager */
 .ai-keybox{display:flex;gap:6px;align-items:center;flex:1 1 100%;min-width:0}

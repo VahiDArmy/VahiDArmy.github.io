@@ -5,7 +5,7 @@
 'use strict';
 (() => {
 
-const BUILD = '1.7';
+const BUILD = '1.8';
 const SB_URL  = 'https://ummhohozmpwltbgeczsf.supabase.co';
 const SB_KEY  = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
 const SB_DASH = 'https://supabase.com/dashboard/project/ummhohozmpwltbgeczsf/sql/new';
@@ -1552,6 +1552,17 @@ function cleanKey(v) {
     .replace(/["'`\u201C\u201D\u2018\u2019]/g, '');
 }
 let DIAG = null;
+const REASON_RE = /(deepseek-r1|deepseek-v3\.[12]|qwq|qvq|o[134]-|grok-4|magistral|thinking|reasoner)/i;
+const HTTP_NAMES = {
+  400: 'Bad request', 401: 'Unauthorized', 402: 'Payment required', 403: 'Forbidden',
+  404: 'Not found', 408: 'Timeout', 413: 'Payload too large', 422: 'Unprocessable content',
+  429: 'Too many requests', 500: 'Server error', 502: 'Bad gateway',
+  503: 'Service unavailable', 504: 'Gateway timeout', 520: 'Provider error', 524: 'Provider timeout'
+};
+const snip = (t, n) => String(t == null ? '' : t).replace(/\s+/g, ' ').trim().slice(0, n || 300);
+const isReasonModel = id => REASON_RE.test(String(id || ''));
+const fmtMs = ms => ms >= 1000 ? (ms / 1000).toFixed(1) + ' s' : Math.round(ms) + ' ms';
+function aiErr(o) { const e = new Error(o.msg || o.head || 'Request failed'); e.info = o; return e; }
 const AI = {
   key() { try { return cleanKey(localStorage.getItem(AI_KEY_LS) || ''); } catch { return ''; } },
   keyValid(v) { return AI_KEY_RE.test(v == null ? this.key() : v); },
@@ -1576,19 +1587,21 @@ const AI = {
     catch { return false; }
   },
   host() { try { return new URL(this.base()).host; } catch { return 'OpenRouter'; } },
+  deep() { return !!(S.ai && S.ai.deep); },
   netMsg() {
     if (navigator.onLine === false) return 'you are offline — reconnect and try again.';
     return 'the request never left your browser, so a VPN, proxy, firewall or extension is filtering ' + this.host() + '. Allow this site, or try another network.';
   },
-  /* Checks the same three layers the AI button uses: reachability, the key
-     carrying request (needs a CORS preflight) and — on request — a live reply. */
+  /* Checks the same layers the AI button uses: reachability, the key carrying
+     request (needs a CORS preflight) and, on request, a live streamed reply. */
   async diag(opts) {
     const d = { base: this.base(), host: this.host(), at: 0, models: null, auth: null, chat: null };
     let t = Date.now();
     try {
       const r = await fetch(d.base + '/models');
-      const j = await r.json().catch(() => null);
-      d.models = { ok: r.ok, status: r.status, n: (j && j.data ? j.data.length : 0), ms: Date.now() - t };
+      const txt = await r.text();
+      let j = null; try { j = JSON.parse(txt); } catch {}
+      d.models = { ok: r.ok, status: r.status, n: (j && j.data ? j.data.length : 0), ms: Date.now() - t, ct: r.headers.get('content-type') || '', raw: r.ok ? '' : snip(txt, 300) };
     } catch { d.models = { net: true, ms: Date.now() - t }; }
     const key = this.key();
     if (!key) d.auth = { none: true };
@@ -1597,8 +1610,9 @@ const AI = {
       t = Date.now();
       try {
         const r = await fetch(d.base + '/key', { headers: { Authorization: 'Bearer ' + key } });
-        const j = await r.json().catch(() => null);
-        d.auth = { ok: r.ok, status: r.status, ms: Date.now() - t, data: (j && j.data) || null };
+        const txt = await r.text();
+        let j = null; try { j = JSON.parse(txt); } catch {}
+        d.auth = { ok: r.ok, status: r.status, ms: Date.now() - t, data: (j && j.data) || null, raw: r.ok ? '' : snip(txt, 300) };
       } catch { d.auth = { net: true, ms: Date.now() - t }; }
     }
     const m = this.active();
@@ -1609,8 +1623,17 @@ const AI = {
           method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
           body: JSON.stringify({ model: m.id, messages: [{ role: 'user', content: 'ping' }], max_tokens: 4 })
         });
-        const j = await r.json().catch(() => null);
-        d.chat = { ok: r.ok, status: r.status, ms: Date.now() - t, model: m.id, msg: this.fixMsg(r.status, (j && j.error && j.error.message) || '') };
+        const txt = await r.text();
+        let j = null; try { j = JSON.parse(txt); } catch {}
+        const er = (j && j.error) || null;
+        d.chat = {
+          ok: r.ok, status: r.status, ms: Date.now() - t, model: m.id,
+          msg: er ? String(er.message || er.code || snip(txt, 200)) : (r.ok ? '' : snip(txt, 200)),
+          code: er && er.code != null ? er.code : '',
+          provider: (er && er.metadata && er.metadata.provider_name) || '',
+          ct: r.headers.get('content-type') || '',
+          raw: txt
+        };
       } catch { d.chat = { net: true, ms: Date.now() - t, model: m.id }; }
     }
     d.at = Date.now();
@@ -1621,32 +1644,54 @@ const AI = {
     const p = [], m = d.models || {}, a = d.auth || {}, c = d.chat;
     if (m.ok) p.push(`${d.host} reachable · ${m.n} models · ${m.ms} ms`);
     else if (m.net) p.push(`no route to ${d.host} — ${navigator.onLine === false ? 'you are offline' : 'VPN, proxy or extension is blocking it'}`);
-    else p.push(`${d.host} answered HTTP ${m.status}`);
+    else p.push(`${d.host} answered HTTP ${m.status}${m.raw ? ' — ' + snip(m.raw, 90) : ''}`);
     if (a.none) p.push('no key saved yet');
     else if (a.invalid) p.push('saved key has characters a key cannot contain — paste it again on one line');
     else if (a.net) p.push('key request blocked before it was sent (CORS, VPN or extension)');
-    else if (a.status === 401) p.push('key rejected (401) — check it on OpenRouter');
     else if (a.ok) p.push('key accepted');
-    else if (a.status === 404) p.push('this base has no /key endpoint');
-    else p.push('key check HTTP ' + a.status);
+    else p.push(`key check HTTP ${a.status}${a.raw ? ' — ' + snip(a.raw, 90) : ''}`);
     if (c) {
-      if (c.ok) p.push(`test prompt answered in ${c.ms} ms`);
+      if (c.ok) p.push(`test prompt answered in ${fmtMs(c.ms)}`);
       else if (c.net) p.push('chat request blocked before it was sent (CORS, VPN or extension)');
-      else p.push('chat failed — ' + (c.msg || 'HTTP ' + c.status));
+      else p.push(`chat HTTP ${c.status}${HTTP_NAMES[c.status] ? ' ' + HTTP_NAMES[c.status] : ''} — ${c.msg || 'empty body'}${c.provider ? ' (' + c.provider + ')' : ''}`);
     }
     return p.join(' · ').replace(/[.\s]+$/, '') + '.';
   },
+  /* Turns any thrown value into the most exact error we can name: the server's
+     own status and body when there is one, the browser string plus the failing
+     layer when the request never got an answer. */
   async explain(e) {
-    if (e && e.name === 'AbortError') return 'The model took too long to answer. Try again, or pick a smaller model.';
-    if (!(e instanceof TypeError)) return (e && e.message) || 'Request failed.';
+    if (e && e.info) return e;
+    if (e && e.name === 'AbortError') return aiErr({
+      kind: 'abort', head: 'Timed out',
+      msg: 'The model did not answer before the deadline (' + (this.deep() ? '180 s' : '90 s') + ').',
+      hint: 'Reasoning models are slow. Retry, pick a smaller model, or leave deep reasoning off.', raw: ''
+    });
     const d = await this.diag();
-    const host = d.host;
-    if (!d.models || !d.models.ok) return 'Could not reach ' + host + ' — ' + this.netMsg();
-    if (d.auth && d.auth.invalid) return 'Your saved key contains characters a key cannot have (a line break, a quote or a space). Open Settings → Word insight and paste it again on one line.';
-    if (d.auth && d.auth.net) return host + ' is reachable, but the request that carries your key never left the browser — a VPN, proxy, firewall or extension is blocking authenticated API calls. Allow this site, or try another network.';
-    if (d.auth && d.auth.ok) return host + ' answers your key, but the /chat/completions request was blocked before it was sent — an extension, VPN or proxy is filtering the AI endpoint. Allow this site and retry.';
-    if (d.auth && d.auth.status === 401) return host + ' rejected your key (401), so no AI request could run. Check the key on OpenRouter, then paste it again in Settings → Word insight.';
-    return host + ' is reachable, but the reply to the AI request could not be read — a CORS rejection, usually from an ad-blocker or privacy extension. Disable it for this page and retry.';
+    const i = {
+      kind: 'network', head: 'Network error — no answer reached the browser',
+      msg: (e && e.message) || 'Failed to fetch', meta: '', hint: '', raw: this.diagMsg(d)
+    };
+    if (!d.models || !d.models.ok) {
+      i.meta = 'GET ' + d.base + '/models failed';
+      i.hint = 'Could not reach ' + d.host + ' — ' + this.netMsg();
+    } else if (d.auth && d.auth.invalid) {
+      i.meta = 'POST ' + d.base + '/chat/completions blocked';
+      i.hint = 'Your saved key contains characters a key cannot have (a line break, a quote or a space). Paste it again in Settings → Word insight on one line.';
+    } else if (d.auth && d.auth.net) {
+      i.meta = 'GET ' + d.base + '/key blocked · ' + d.host + ' plain requests work';
+      i.hint = 'The request that carries your key never left the browser — a VPN, proxy, firewall or extension is blocking authenticated calls. Allow this site, or try another network.';
+    } else if (d.auth && d.auth.ok) {
+      i.meta = 'key accepted · /chat/completions still blocked';
+      i.hint = 'Your key works but the AI endpoint is filtered — an ad-blocker, VPN or proxy is dropping requests to ' + d.base + '/chat/completions. Allow this site, or use another base in Settings.';
+    } else if (d.auth && d.auth.status === 401) {
+      i.meta = 'key rejected with 401';
+      i.hint = 'The key check returned 401, so no AI request could run. Check the key on ' + d.host + ', then paste it again.';
+    } else {
+      i.meta = 'the request was sent, the reply could not be read';
+      i.hint = 'That is a CORS or TLS failure inside the reading of the response — usually an ad-blocker or privacy extension. Disable it for this page and retry.';
+    }
+    return aiErr(i);
   },
   list() { return (S.ai.models || []).filter(m => m && m.id); },
   active() {
@@ -1660,57 +1705,252 @@ const AI = {
     if (ks.length > 240) ks.slice(0, ks.length - 240).forEach(x => delete c[x]);
     try { localStorage.setItem(AI_CACHE_LS, JSON.stringify(c)); } catch {}
   },
-  fixMsg(status, msg) {
-    if (status === 401) return 'OpenRouter rejected the key (401). Check it in Settings → Word insight.';
-    if (status === 402) return 'This model needs credits (402). Pick a free model or top up on OpenRouter.';
-    if (status === 404) return 'That model is unavailable (404). ' + msg;
-    if (status === 429) return 'Free-model rate limit (429). Wait a minute, or switch models.';
-    if (status >= 500) return 'OpenRouter had a server error (' + status + '). Try again.';
-    return msg || ('Request failed (' + status + ')');
+  hintFor(status, notJSON) {
+    if (notJSON) return 'Something between you and ' + this.host() + ' replaced the reply (captive portal, proxy, antivirus or extension). Open ' + this.base() + '/models in a tab to see what really comes back.';
+    if (status === 400) return 'OpenRouter rejected the request itself — the message above is its own wording. Check the model id, or turn deep reasoning off if the model does not support it.';
+    if (status === 401) return 'The key was rejected. Create or check it on ' + this.host() + ' → Keys, then paste it again in Settings → Word insight.';
+    if (status === 402) return 'This model is paid and the balance is too low. Pick a model marked free, or top up on ' + this.host() + '.';
+    if (status === 403) return 'The key is valid but not allowed to do this — moderation, region or provider policy refused it. Try another model.';
+    if (status === 404) return 'No such model or endpoint at this base. Check the model id, or reset the API base in Settings.';
+    if (status === 408 || status === 504 || status === 524) return 'The provider timed out. Retry, or pick a faster model.';
+    if (status === 429) return 'Rate limit. Wait for the retry-after window (or a minute), then retry; free models share a small daily quota.';
+    if (status >= 500) return 'This is ' + this.host() + ' or the upstream provider failing, not your key. Retry, or switch model.';
+    return '';
   },
-  async call(model, messages) {
+  /* One error object for every unexpected answer: exact HTTP status, exact body
+     message, provider and code, the raw response, plus a hint. */
+  serverErr(r, model, notJSON) {
+    const status = r.status, text = r.text || '', ct = r.ct || '', ra = r.ra || '';
+    let j = null; try { j = JSON.parse(text); } catch {}
+    const er = (j && j.error) || null;
+    const md = (er && er.metadata) || (j && j.metadata) || {};
+    const provRaw = md.raw != null ? (typeof md.raw === 'string' ? md.raw : JSON.stringify(md.raw)) : '';
+    const msg = er ? String(er.message || er.code || '') : (j && j.message ? String(j.message) : '');
+    const code = er && er.code != null ? er.code : '';
+    const meta = [];
+    if (code !== '') meta.push('code ' + code);
+    if (md.provider_name) meta.push('provider ' + md.provider_name);
+    if (ra) meta.push('retry-after ' + ra + 's');
+    if (ct) meta.push(ct.split(';')[0]);
+    meta.push('model ' + model.id);
+    if (md.is_byok) meta.push('BYOK');
+    const detail = msg || provRaw || snip(text, 400) || '(the response body was empty)';
+    const head = notJSON
+      ? 'HTTP ' + status + ' · reply was not JSON'
+      : 'HTTP ' + status + (HTTP_NAMES[status] ? ' ' + HTTP_NAMES[status] : '');
+    this.last = { at: Date.now(), url: this.base() + '/chat/completions', model: model.id, status, ct, ms: 0, raw: text };
+    return aiErr({ kind: 'server', head, msg: detail, meta: meta.join(' · '), hint: this.hintFor(status, notJSON), raw: text, retryAfter: ra, status });
+  },
+  emptyErr(model, finish, why, raw) {
+    return aiErr({
+      kind: 'empty',
+      head: 'Empty answer' + (finish ? ' · finish_reason: ' + finish : ' · no content'),
+      msg: finish === 'length'
+        ? 'The model used its whole token budget before writing an answer.'
+        : finish === 'content_filter'
+          ? 'The provider filtered the answer (content_filter).'
+          : 'The model finished its turn without writing any text.',
+      meta: 'model ' + model.id + (why ? ' · reasoning only, ' + why.length + ' chars' : ''), 
+      hint: finish === 'length' ? 'Retry, or choose a model with a larger context.' : 'Retry, or switch to another model.',
+      raw: raw || ''
+    });
+  },
+  fromJSON(text, ct, model, h) {
+    let j = null; try { j = JSON.parse(text); } catch {}
+    if (!j) throw this.serverErr({ status: 200, ct, text, ra: '' }, model, true);
+    if (j.error) throw this.serverErr({ status: 200, ct, text, ra: '' }, model);
+    const ch = (j.choices && j.choices[0]) || {};
+    const msg = ch.message || {};
+    const ans = String(msg.content == null ? '' : msg.content).trim();
+    const why = String(msg.reasoning || msg.reasoning_content || '').trim();
+    if (!ans) throw this.emptyErr(model, ch.finish_reason || j.finish_reason || '', why, text);
+    if (why && h && h.reason) h.reason(why);
+    if (h && h.delta) h.delta(ans);
+    return { text: ans, why, finish: ch.finish_reason || '', ms: 0, model: model.id };
+  },
+  /* Streams the answer token by token. Falls back to one JSON read when the
+     server answers non-streamed, and reports the exact error in every failure. */
+  async call(model, messages, h) {
+    h = h || {};
     const key = this.key();
-    if (!key) throw new Error('No OpenRouter key yet — add one in Settings → Word insight.');
-    if (!this.keyValid(key)) throw new Error('Your saved key is not a valid OpenRouter key. Open Settings → Word insight and paste it again on one line.');
+    if (!key) throw aiErr({ kind: 'config', head: 'No API key', msg: 'No ' + this.host() + ' key yet — add one in Settings → Word insight.', raw: '' });
+    if (!this.keyValid(key)) throw aiErr({ kind: 'config', head: 'Key is malformed', msg: 'The saved key is not a valid key (expected sk-or-… on a single line). Paste it again in Settings → Word insight.', raw: '' });
+    const deep = !!h.deep;
+    const url = this.base() + '/chat/completions';
+    const body = {
+      model: model.id, messages,
+      temperature: deep ? 0.3 : 0.2,
+      max_tokens: deep ? 3200 : 900,
+      stream: true
+    };
+    if (deep || isReasonModel(model.id)) body.reasoning = { effort: deep ? 'high' : 'medium' };
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 60000);
+    const timer = setTimeout(() => ctl.abort(), deep ? 180000 : 90000);
+    const t0 = Date.now();
+    const send = p => fetch(url, {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify(p)
+    });
+    const readFail = async r => ({ status: r.status, ct: r.headers.get('content-type') || '', ra: r.headers.get('retry-after') || '', text: await r.text().catch(() => '') });
     try {
-      /* Only the two headers the API needs: extra custom headers force a wider
-         CORS preflight, which some proxies and extensions reject. */
-      const r = await fetch(this.base() + '/chat/completions', {
-        method: 'POST', signal: ctl.signal,
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
-        body: JSON.stringify({ model: model.id, messages, temperature: 0.2, max_tokens: 700 })
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(this.fixMsg(r.status, j?.error?.message || ''));
-      const txt = j?.choices?.[0]?.message?.content?.trim();
-      if (!txt) throw new Error('The model returned an empty answer. Try another model.');
-      return txt;
+      let r = await send(body);
+      let fail = null;
+      if (!r.ok) {
+        fail = await readFail(r);
+        /* A model without reasoning support refuses the reasoning field: drop it
+           once and retry, instead of reporting a failure that is our own fault. */
+        if (fail.status === 400 && body.reasoning && /reasoning|effort|not supported|unsupported/i.test(fail.text)) {
+          delete body.reasoning;
+          r = await send(body);
+          fail = r.ok ? null : await readFail(r);
+        }
+        if (fail) throw this.serverErr(fail, model);   /* the body is read once, kept verbatim */
+      }
+      const ct = r.headers.get('content-type') || '';
+      if (!/event-stream/i.test(ct) || !r.body || typeof r.body.getReader !== 'function') {
+        const txt = await r.text();
+        const out = this.fromJSON(txt, ct, model, h);
+        out.ms = Date.now() - t0;
+        this.last = { at: Date.now(), url, model: model.id, status: r.status, ct, ms: out.ms, raw: txt, stream: false };
+        return out;
+      }
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '', ans = '', why = '', finish = '', srvErr = null, done = false, rawHead = '';
+      while (!done) {
+        const step = await reader.read();
+        if (step.done) break;
+        buf += dec.decode(step.value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).replace(/\r$/, '');
+          buf = buf.slice(nl + 1);
+          if (!line || line.charAt(0) === ':') continue;   /* ": OPENROUTER PROCESSING" keep-alive */
+          if (line.slice(0, 5) !== 'data:') continue;
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') { done = true; break; }
+          let j = null; try { j = JSON.parse(data); } catch { continue; }
+          if (rawHead.length < 600) rawHead += data + '\n';
+          if (j.error) { srvErr = j.error; done = true; break; }
+          const ch = (j.choices && j.choices[0]) || {};
+          const d = ch.delta || ch.message || {};
+          const rsn = d.reasoning || d.reasoning_content;
+          if (rsn) { why += rsn; if (h.reason) h.reason(why); }
+          if (d.content) { ans += d.content; if (h.delta) h.delta(ans); }
+          if (ch.finish_reason) finish = ch.finish_reason;
+        }
+      }
+      try { reader.cancel(); } catch {}
+      const ms = Date.now() - t0;
+      this.last = { at: Date.now(), url, model: model.id, status: r.status, ct, ms, finish, stream: true, raw: rawHead };
+      if (srvErr) {
+        const body2 = JSON.stringify({ error: srvErr, choices: ans ? [{ message: { content: ans } }] : [] });
+        const st = typeof srvErr.code === 'number' ? srvErr.code : r.status;
+        throw this.serverErr({ status: st, ct: 'application/json', ra: '', text: body2 }, model);
+      }
+      if (!ans.trim()) throw this.emptyErr(model, finish, why, rawHead);
+      return { text: ans.trim(), why: why.trim(), finish, ms, model: model.id };
     } catch (e) {
-      throw new Error(await this.explain(e));
+      throw await this.explain(e);
     } finally { clearTimeout(timer); }
   }
 };
+
+
 function aiPrompt(word, sg) {
   return [
     { role: 'system', content: 'تو آموزگار صرف و نحو عربی برای فارسی‌زبانانی هستی که عربی نمی‌دانند. پاسخ را فقط به فارسی روان و کوتاه بنویس، با اصطلاحات دقیق صرفی و نحوی ولی توضیح ساده. بی‌مقدمه و بدون مقدمه‌چینی شروع کن.' },
     { role: 'user', content: `واژه: «${word}»\nجمله: «${sg.ar}»\nترجمهٔ فارسی جمله: «${sg.fa}»\n\nاین واژه را در چهار بخش کوتاه (هر بخش یک تا دو خط، با تیتر) توضیح بده:\n۱. معنا در همین جمله\n۲. ریشه (جذر) و معنای آن\n۳. ساختار صرفی: وزن، باب، زمان، شخص و شمار\n۴. نقش نحوی در جمله` }
   ];
 }
-function renderAI(text) {
-  const out = $('#wp-out');
-  if (!out) return;
-  const lines = String(text).replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
+function aiLinesHTML(text, streaming) {
+  const lines = String(text == null ? '' : text).replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
   const html = lines.map(line => {
     let t = esc(line).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
     if (!/<b>/.test(t)) t = t.replace(/^([^:：]{1,52})[:：]\s*(.+)$/, '<b>$1:</b> $2');
     return `<div class="ai-blk">${t}</div>`;
   }).join('');
-  out.innerHTML = html;
+  return streaming ? html + '<span class="ai-caret" aria-hidden="true"></span>' : html;
+}
+function aiWhyHTML(why) {
+  if (!why) return '';
+  return `<details class="ai-why"><summary>Reasoning · ${why.length} chars</summary><div class="ai-why-body" dir="auto">${esc(why)}</div></details>`;
+}
+/* Shows the exact failure: the server's own status and wording first, the hint
+   second, and the untouched response body behind a fold. */
+function aiErrHTML(e) {
+  const i = (e && e.info) || null;
+  if (!i) return `<div class="wp-err"><div class="we-head">${esc((e && e.message) || 'Request failed')}</div></div>`;
+  const meta = i.meta ? `<div class="we-meta">${esc(i.meta)}</div>` : '';
+  const hint = i.hint ? `<div class="we-hint">${esc(i.hint)}</div>` : '';
+  const raw = i.raw
+    ? `<details class="we-raw"><summary>Raw response · ${i.raw.length} chars</summary><pre dir="auto">${esc(i.raw)}</pre></details>`
+    : '';
+  return `<div class="wp-err"><div class="we-head">${esc(i.head || 'Request failed')}</div>` +
+    (i.msg ? `<div class="we-msg" dir="auto">${esc(i.msg)}</div>` : '') + meta + hint + raw + '</div>';
+}
+function renderAI(v) {
+  const out = $('#wp-out');
+  if (!out) return;
+  const t = v && typeof v === 'object' ? v.t : v;
+  const w = v && typeof v === 'object' ? v.w : '';
+  out.innerHTML = aiWhyHTML(w) + aiLinesHTML(t || '');
   out.hidden = false;
   out.scrollTop = 0;
   if (WORD) placeWord(WORD.el);
+}
+/* One live answer inside the word popup: loads, streams reasoning, streams text. */
+function aiView(out, target, m, deep) {
+  out.hidden = false;
+  out.innerHTML = '<div class="wp-live">' +
+    `<div class="wp-load"><i></i><span>${esc(shortName(m.name))} is ${deep ? 'reasoning' : 'thinking'}…</span></div>` +
+    '<details class="ai-why" hidden><summary></summary><div class="ai-why-body" dir="auto"></div></details>' +
+    '<div class="ai-body"></div></div>';
+  const live = out.querySelector('.wp-live');
+  const load = live.querySelector('.wp-load');
+  const whyBox = live.querySelector('.ai-why');
+  const whySum = whyBox.querySelector('summary');
+  const whyBody = whyBox.querySelector('.ai-why-body');
+  const bodyEl = live.querySelector('.ai-body');
+  let text = '', why = '', raf = 0, finished = false;
+  const paint = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      if (WORD !== target) return;
+      if (why) {
+        whyBox.hidden = false;
+        whySum.textContent = `Reasoning · ${why.length} chars`;
+        whyBody.textContent = why;
+      }
+      bodyEl.innerHTML = aiLinesHTML(text, !finished);
+      if (text) load.hidden = true;
+      if (out.scrollHeight - out.scrollTop - out.clientHeight < 90) out.scrollTop = out.scrollHeight;
+      placeWord(target.el);
+    });
+  };
+  return {
+    reason(t) { why = t; paint(); },
+    delta(t) { text = t; paint(); },
+    done(res) {
+      finished = true;
+      if (res && res.text) text = res.text;
+      if (res && res.why) why = res.why;
+      load.hidden = true;
+      bodyEl.innerHTML = aiLinesHTML(text, false);
+      if (why) { whyBox.hidden = false; whyBox.open = false; whySum.textContent = `Reasoning · ${why.length} chars`; whyBody.textContent = why; }
+      else whyBox.hidden = true;
+      out.scrollTop = 0;
+      placeWord(target.el);
+    },
+    fail(e) {
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      out.innerHTML = aiErrHTML(e);
+      out.scrollTop = 0;
+      placeWord(target.el);
+    }
+  };
 }
 function closeWord(silent) {
   const pop = $('#word-pop');
@@ -1748,7 +1988,7 @@ function openWord(el) {
   const out = $('#wp-out');
   out.hidden = true; out.innerHTML = '';
   const m = AI.active();
-  $('#wp-model').textContent = m ? (m.free ? 'free' : 'paid') + ' · ' + shortName(m.name) : 'no model';
+  $('#wp-model').textContent = m ? (m.free ? 'free' : 'paid') + ' · ' + shortName(m.name) + (AI.deep() ? ' · deep' : '') : 'no model';
   el.classList.add('hit');
   placeWord(el);
   Sound.play('pop');
@@ -1772,23 +2012,22 @@ async function explainWord() {
   const target = WORD;
   const sg = IDX[target.segId];
   const out = $('#wp-out');
-  const ck = `${m.id}|${target.segId}|${target.norm}`;
+  const deep = AI.deep();
+  const ck = `${m.id}|${target.segId}|${target.norm}|${deep ? 'd' : 'q'}`;
   const hit = AI.cache()[ck];
   Sound.play('tap');
   if (hit) { renderAI(hit); return; }
-  out.hidden = false;
-  out.innerHTML = `<div class="wp-load"><i></i><span>${esc(shortName(m.name))} is thinking…</span></div>`;
+  const view = aiView(out, target, m, deep);
   if (WORD) placeWord(WORD.el);
   try {
-    const text = await AI.call(m, aiPrompt(target.tok, sg));
-    AI.cacheSet(ck, text);
+    const res = await AI.call(m, aiPrompt(target.tok, sg), { deep, delta: view.delta, reason: view.reason });
+    AI.cacheSet(ck, { t: res.text, w: res.why });
     if (WORD !== target) return;
-    renderAI(text);
+    view.done(res);
     Sound.play('reveal');
   } catch (e) {
     if (WORD !== target) return;
-    out.innerHTML = `<div class="wp-err">${esc(e.message)}</div>`;
-    if (WORD) placeWord(WORD.el);
+    view.fail(e);
     Sound.play('error');
   }
 }
@@ -1810,6 +2049,8 @@ function renderAIModels() {
   }
   const inp = $('#ai-key');
   if (inp) inp.placeholder = key ? 'Saved — paste a new key to replace' : 'sk-or-v1-…';
+  const dp = $('#ai-deep');
+  if (dp) dp.checked = AI.deep();
   const bi = $('#ai-base');
   if (bi && !bi.value) bi.value = AI.customBase();
   const bl = $('#ai-baseline');
@@ -2043,19 +2284,37 @@ const H = {
     if (!AI.setBase(v)) { toast('This browser blocks local storage', 'err', 'alert'); return; }
     try { localStorage.removeItem(AI_CAT_LS); } catch {}
     renderAIModels();
-    const line = $('#ai-testline'); if (line) { line.className = ''; line.textContent = ''; }
+    const line = $('#ai-testline'); if (line) { line.className = ''; line.textContent = ''; line.title = ''; }
+    const rb = $('#ai-testraw'); if (rb) rb.hidden = true;
     Sound.play('success');
     toast(v ? 'Using ' + AI.host() : 'Back to the default endpoint', 'ok', 'check');
   },
   'ai-test': async () => {
     const btn = $('#ai-test-btn'), line = $('#ai-testline');
-    if (line) { line.className = ''; line.textContent = 'Testing ' + AI.host() + '…'; }
+    const rawBox = $('#ai-testraw'), rawPre = $('#ai-testraw-pre');
+    if (line) { line.className = ''; line.title = ''; line.textContent = 'Testing ' + AI.host() + '…'; }
+    if (rawBox) rawBox.hidden = true;
     if (btn) btn.disabled = true;
     const d = await AI.diag({ chat: true });
     const ok = !!(d.models && d.models.ok && (!d.auth || d.auth.ok) && (!d.chat || d.chat.ok));
     if (btn) btn.disabled = false;
-    if (line) { line.className = ok ? 'ok' : 'bad'; line.textContent = AI.diagMsg(d); }
+    if (line) {
+      line.className = ok ? 'ok' : 'bad';
+      line.textContent = AI.diagMsg(d);
+      line.title = (d.chat && d.chat.raw) || '';
+    }
+    if (rawBox && rawPre) {
+      const raw = (d.chat && d.chat.raw) || (d.auth && d.auth.raw) || (d.models && d.models.raw) || '';
+      rawBox.hidden = !raw || ok;
+      rawPre.textContent = raw;
+    }
     Sound.play(ok ? 'success' : 'error');
+  },
+  'ai-deep': t => {
+    S.ai.deep = !!t.checked;
+    persist(); renderAIModels();
+    Sound.play('tap');
+    toast(S.ai.deep ? 'Deep reasoning on — slower, shows the model\u2019s thinking' : 'Deep reasoning off', 'ok', 'spark');
   },
   'ai-add': () => openModelPicker(),
   'ai-active': () => Sound.play('tap'),
@@ -2105,7 +2364,7 @@ const SELF_SOUND = new Set([
   'lib-tab', 'export', 'resend', 'auth-tab', 'eye', 'sec-read', 'account', 'continue', 'begin', 'daily', 'jump',
   'nav', 'reset-data', 'coach-dismiss', 'copy-sql', 'sync-info', 'sync-now', 'mark-chapter',
   'word-close', 'word-ai', 'ai-add', 'ai-active', 'ai-activate', 'ai-toggle', 'ai-del', 'ai-pick',
-  'ai-key-save', 'ai-key-clear', 'ai-manual-add', 'ai-base-save', 'ai-test'
+  'ai-key-save', 'ai-key-clear', 'ai-manual-add', 'ai-base-save', 'ai-test', 'ai-deep'
 ]);
 
 /* ═══════════ EVENTS ═══════════ */
