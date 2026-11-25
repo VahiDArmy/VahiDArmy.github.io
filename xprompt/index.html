@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PromptForge — refine prompts with AI, preserving intent and highlighting changes." />
+  <title>PromptForge · AI Prompt Refiner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">PF</div>
+      <div>
+        <h1>PromptForge</h1>
+        <p class="tagline">Refine prompts · preserve intent</p>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="model-picker">
+        <label for="model-select">Model</label>
+        <select id="model-select" aria-label="AI model"></select>
+      </div>
+      <button class="btn ghost" id="btn-models">
+        <span class="dot"></span> Models
+      </button>
+      <button class="btn ghost" id="btn-settings">
+        <span class="dot"></span> Settings
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="segmented" id="dir-toggle" role="group" aria-label="Text direction">
+          <button data-dir="auto" class="active" title="Auto-detect direction">Auto</button>
+          <button data-dir="ltr" title="Force left-to-right">LTR</button>
+          <button data-dir="rtl" title="Force right-to-left">RTL</button>
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <button class="btn primary" id="btn-level1" title="Check spelling & grammar (Ctrl+Enter)">
+          <span class="spark">✦</span> Fix grammar
+        </button>
+        <button class="btn accent" id="btn-level2" title="Deep sanity & paradox review (Ctrl+Shift+Enter)">
+          <span class="spark">✧</span> Deep review
+        </button>
+      </div>
+    </div>
+
+    <section class="editor-grid">
+      <article class="pane pane-original">
+        <header class="pane-header">
+          <h2>Your prompt</h2>
+          <div class="pane-tools">
+            <button class="icon-btn" id="btn-clear" title="Clear">✕</button>
+          </div>
+        </header>
+        <div class="pane-body">
+          <textarea id="prompt-input" placeholder="Paste or write your prompt here…" spellcheck="false"></textarea>
+        </div>
+        <footer class="pane-footer">
+          <span id="char-count">0 characters</span>
+          <span id="dir-indicator">LTR</span>
+        </footer>
+      </article>
+
+      <article class="pane pane-refined">
+        <header class="pane-header">
+          <h2>Refined prompt</h2>
+          <div class="pane-tools">
+            <button class="icon-btn" id="btn-toggle-del" title="Toggle deleted segments">◐</button>
+            <button class="icon-btn" id="btn-copy" title="Copy refined text">⧉</button>
+          </div>
+        </header>
+        <div class="pane-body">
+          <div id="refined-output" class="refined-output" dir="auto">
+            <div class="placeholder">Your refined prompt will appear here.<br><small>Green glow = added or changed · red = removed</small></div>
+          </div>
+        </div>
+        <footer class="pane-footer">
+          <span id="status-text">Ready</span>
+          <span id="diff-stats"></span>
+        </footer>
+      </article>
+    </section>
+  </main>
+
+  <!-- Settings modal -->
+  <div class="modal" id="modal-settings" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <header>
+        <h3 id="settings-title">Settings</h3>
+        <button class="icon-btn" data-close title="Close">✕</button>
+      </header>
+      <div class="modal-body">
+        <label for="api-key">OpenRouter API key</label>
+        <input id="api-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
+        <p class="hint">Stored only in this browser (localStorage). Sent only to openrouter.ai.</p>
+        <div class="row">
+          <button class="btn ghost" id="btn-save-key">Save key</button>
+          <button class="btn ghost danger" id="btn-clear-key">Remove key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Models modal -->
+  <div class="modal" id="modal-models" hidden>
+    <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="models-title">
+      <header>
+        <h3 id="models-title">AI models</h3>
+        <div class="modal-actions">
+          <button class="btn ghost" id="btn-fetch-models">Fetch free models</button>
+          <button class="icon-btn" data-close title="Close">✕</button>
+        </div>
+      </header>
+      <div class="modal-body">
+        <div id="models-list" class="models-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
