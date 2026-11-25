@@ -5,13 +5,15 @@
 'use strict';
 (() => {
 
-const BUILD = '1.4';
+const BUILD = '1.5';
 const SB_URL  = 'https://ummhohozmpwltbgeczsf.supabase.co';
 const SB_KEY  = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
 const SB_DASH = 'https://supabase.com/dashboard/project/ummhohozmpwltbgeczsf/sql/new';
 const T_STATE = 'istigfarqwen_user_state';
 const T_ACT   = 'istigfarqwen_daily_activity';
 const LS_STATE = 'nur.state.v1', LS_SESSION = 'nur.session.v1';
+const AI_KEY_LS = 'nur.ai.key.v1', AI_CAT_LS = 'nur.ai.catalog.v1', AI_CACHE_LS = 'nur.ai.cache.v1';
+const AI_ENDPOINT = 'https://openrouter.ai/api/v1';
 
 const SQL_TEXT = `create table if not exists public.istigfarqwen_user_state (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -68,13 +70,22 @@ const copyText = async txt => {
 
 /* ── state ───────────────────────────────────────────────────── */
 const reducedMotion = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
+const SEED_MODELS = [
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B Instruct', ctx: 131072, free: true },
+  { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1', ctx: 163840, free: true },
+  { id: 'qwen/qwen-2.5-72b-instruct:free', name: 'Qwen 2.5 72B Instruct', ctx: 32768, free: true }
+];
 const DEFAULTS = {
   v: 1,
   settings: {
     theme: 'midnight', arFont: 'amiri', fontScale: 1, lineHeight: 2.05, trans: 'en',
     sound: true, volume: .7, ambient: false, motion: !reducedMotion, ttsRate: .85, goal: 5
   },
-  read: {}, last: null, bookmarks: {}, notes: {}, ach: {}, activity: {}, coachSeen: false
+  read: {}, last: null, bookmarks: {}, notes: {}, ach: {}, activity: {}, coachSeen: false,
+  ai: {
+    models: SEED_MODELS.map(m => ({ ...m, enabled: true, addedAt: 0 })),
+    active: SEED_MODELS[0].id
+  }
 };
 const THEMES = ['midnight', 'royal', 'emerald', 'sepia', 'dawn'];
 const ARFONTS = ['amiri', 'scheherazade', 'naskh'];
@@ -89,12 +100,14 @@ function withDefaults(s) {
     ...d, ...s,
     settings: { ...d.settings, ...(s.settings || {}) },
     read: s.read || {}, bookmarks: s.bookmarks || {}, notes: s.notes || {},
-    ach: s.ach || {}, activity: s.activity || {}
+    ach: s.ach || {}, activity: s.activity || {},
+    ai: { ...d.ai, ...(s.ai || {}) }
   };
 }
 let S = withDefaults(loadJSON(LS_STATE));
 let session = loadJSON(LS_SESSION);
 let DATA = null, SEGS = [], IDX = {}, SEC_OF = {}, VIEW = 'read', libTab = 'bm';
+let WORDS = {}, WORD = null, PICK = [];
 let lastActive = Date.now(), io = null, refreshTimer = null;
 let syncDetail = '', syncBlocked = false, setupToastShown = false, lastSyncAt = 0;
 const normCache = {};
@@ -112,6 +125,13 @@ function clampSettings() {
   st.sound = !!st.sound;
   st.ambient = !!st.ambient;
   st.motion = !!st.motion;
+  if (!Array.isArray(S.ai?.models) || !S.ai.models.length) S.ai = deepCopy(DEFAULTS.ai);
+  S.ai.models = S.ai.models.filter(m => m && typeof m.id === 'string' && m.id)
+    .map(m => ({ ...m, enabled: m.enabled !== false }));
+  if (!S.ai.models.some(m => m.id === S.ai.active && m.enabled !== false)) {
+    const first = S.ai.models.find(m => m.enabled !== false);
+    S.ai.active = first ? first.id : null;
+  }
 }
 clampSettings();
 
@@ -472,7 +492,7 @@ function syncDrawerInputs() {
   });
 }
 function openSettings() {
-  syncDrawerInputs(); renderDrawerAccount();
+  syncDrawerInputs(); renderDrawerAccount(); renderAIModels();
   document.body.classList.add('drawer-open');
   Sound.play('open');
 }
@@ -608,6 +628,10 @@ async function loadData() {
     } catch (e) { lastErr = e; }
   }
   if (!DATA) throw lastErr || new Error('data/estighfar.json not found');
+  try {
+    const wr = await fetch('data/words.json', { cache: 'no-cache' });
+    if (wr.ok) WORDS = await wr.json();
+  } catch { WORDS = {}; }
   SEGS = []; IDX = {}; SEC_OF = {};
   DATA.sections.forEach(sec => sec.segments.forEach(sg => {
     if (!sg || sg.id == null || !sg.ar) return;
@@ -767,7 +791,7 @@ function segHTML(sg) {
         <button class="icon-btn" data-action="seg-copy" data-id="${sg.id}" data-tip="Copy" aria-label="Copy">${ic('copy')}</button>
         <button class="icon-btn" data-action="seg-play" data-id="${sg.id}" data-tip="Listen" aria-label="Listen">${ic('play', 'ic-play')}${ic('stop', 'ic-stop')}</button>
       </div></div>
-    <p class="ar" dir="rtl" lang="ar">${esc(sg.ar)}</p>
+    <p class="ar" dir="rtl" lang="ar">${arHTML(sg)}</p>
     <div class="trans-wrap"><div class="trans-in">${th}</div></div>
     ${hint}${noteHTML(sg.id)}
   </article>`;
@@ -787,7 +811,7 @@ function vRead() {
     </div>` + sec.segments.map(segHTML).join('');
   }).join('');
   const coach = S.coachSeen ? '' : `<div class="coach" id="coach">${ic('tap')}
-    <span>Tap any verse box to unfold its meaning. Tap again to fold it away.</span>
+    <span>Tap any Arabic word for its Persian gloss. Tap the verse itself to unfold the full meaning.</span>
     <button class="icon-btn" data-action="coach-dismiss" aria-label="Dismiss">${ic('x')}</button></div>`;
   return `<div class="page">
     <div class="bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
@@ -972,7 +996,7 @@ function controlsHTML() {
   return `<div class="sheet-grab"></div>
   <div class="sheet-head"><h2>${ic('set')}Reading controls</h2>
     <button class="icon-btn" data-action="close-controls" aria-label="Close">${ic('x')}</button></div>
-  <p class="sheet-note">${ic('tap')}Tap a verse to unfold its meaning — these controls tune how it reads.</p>
+  <p class="sheet-note">${ic('tap')}Tap a word for its Persian gloss, the verse for its meaning — these controls tune how it reads.</p>
 
   <div class="ctl-row">
     <div class="ctl-lbl"><span>Meaning language</span></div>
@@ -1501,6 +1525,274 @@ function confetti(n = 120) {
   })();
 }
 
+/* ═══════════ WORD-BY-WORD · AI ═══════════ */
+const AR_RUN = /([\u0621-\u064A\u064B-\u065F\u0670]+)/g;
+const AR_STRIP = /[\u064B-\u065F\u0670\u0640\u06D6-\u06ED\u200C]/g;
+function normWord(w) {
+  return String(w).replace(AR_STRIP, '').replace(/[أإآٱ]/g, 'ا').replace(/[^\u0621-\u064A]/g, '');
+}
+function arHTML(sg) {
+  return esc(sg.ar).replace(AR_RUN, m => `<span class="w" data-w="${esc(normWord(m))}" data-seg="${sg.id}">${m}</span>`);
+}
+const shortName = n => { n = String(n || ''); return n.length > 26 ? n.slice(0, 25) + '…' : n; };
+const ctxLabel = n => !n ? '—' : (n >= 1000 ? Math.round(n / 1024) + 'k' : String(n));
+function priceLabel(m) {
+  if (m.free) return 'free';
+  const f = x => x === 0 ? '0' : x < 0.01 ? x.toFixed(4) : x.toFixed(2);
+  return `$${f((+m.p || 0) * 1e6)} / $${f((+m.c || 0) * 1e6)} per 1M`;
+}
+
+const AI = {
+  key() { try { return localStorage.getItem(AI_KEY_LS) || ''; } catch { return ''; } },
+  setKey(v) {
+    try { v ? localStorage.setItem(AI_KEY_LS, v) : localStorage.removeItem(AI_KEY_LS); return true; }
+    catch { return false; }
+  },
+  list() { return (S.ai.models || []).filter(m => m && m.id); },
+  active() {
+    const l = this.list();
+    return l.find(m => m.id === S.ai.active && m.enabled !== false) || l.find(m => m.enabled !== false) || null;
+  },
+  cache() { return loadJSON(AI_CACHE_LS) || {}; },
+  cacheSet(k, v) {
+    const c = this.cache(); c[k] = v;
+    const ks = Object.keys(c);
+    if (ks.length > 240) ks.slice(0, ks.length - 240).forEach(x => delete c[x]);
+    try { localStorage.setItem(AI_CACHE_LS, JSON.stringify(c)); } catch {}
+  },
+  fixMsg(status, msg) {
+    if (status === 401) return 'OpenRouter rejected the key (401). Check it in Settings → Word insight.';
+    if (status === 402) return 'This model needs credits (402). Pick a free model or top up on OpenRouter.';
+    if (status === 404) return 'That model is unavailable (404). ' + msg;
+    if (status === 429) return 'Free-model rate limit (429). Wait a minute, or switch models.';
+    if (status >= 500) return 'OpenRouter had a server error (' + status + '). Try again.';
+    return msg || ('Request failed (' + status + ')');
+  },
+  async call(model, messages) {
+    const key = this.key();
+    if (!key) throw new Error('No OpenRouter key yet — add one in Settings → Word insight.');
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 60000);
+    try {
+      const r = await fetch(AI_ENDPOINT + '/chat/completions', {
+        method: 'POST', signal: ctl.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + key,
+          'HTTP-Referer': location.origin,
+          'X-Title': 'Nur — The Grand Istighfar'
+        },
+        body: JSON.stringify({ model: model.id, messages, temperature: 0.2, max_tokens: 700 })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(this.fixMsg(r.status, j?.error?.message || ''));
+      const txt = j?.choices?.[0]?.message?.content?.trim();
+      if (!txt) throw new Error('The model returned an empty answer. Try another model.');
+      return txt;
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('The model took too long. Try again, or pick a smaller model.');
+      if (e instanceof TypeError) throw new Error('Could not reach OpenRouter — the request was blocked (offline, CORS or an extension). Nothing was sent.');
+      throw e;
+    } finally { clearTimeout(timer); }
+  }
+};
+function aiPrompt(word, sg) {
+  return [
+    { role: 'system', content: 'تو آموزگار صرف و نحو عربی برای فارسی‌زبانانی هستی که عربی نمی‌دانند. پاسخ را فقط به فارسی روان و کوتاه بنویس، با اصطلاحات دقیق صرفی و نحوی ولی توضیح ساده. بی‌مقدمه و بدون مقدمه‌چینی شروع کن.' },
+    { role: 'user', content: `واژه: «${word}»\nجمله: «${sg.ar}»\nترجمهٔ فارسی جمله: «${sg.fa}»\n\nاین واژه را در چهار بخش کوتاه (هر بخش یک تا دو خط، با تیتر) توضیح بده:\n۱. معنا در همین جمله\n۲. ریشه (جذر) و معنای آن\n۳. ساختار صرفی: وزن، باب، زمان، شخص و شمار\n۴. نقش نحوی در جمله` }
+  ];
+}
+function renderAI(text) {
+  const out = $('#wp-out');
+  if (!out) return;
+  const lines = String(text).replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
+  const html = lines.map(line => {
+    let t = esc(line).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    if (!/<b>/.test(t)) t = t.replace(/^([^:：]{1,52})[:：]\s*(.+)$/, '<b>$1:</b> $2');
+    return `<div class="ai-blk">${t}</div>`;
+  }).join('');
+  out.innerHTML = html;
+  out.hidden = false;
+  out.scrollTop = 0;
+  if (WORD) placeWord(WORD.el);
+}
+function closeWord(silent) {
+  const pop = $('#word-pop');
+  if (!pop || pop.hidden) { WORD = null; return; }
+  pop.hidden = true;
+  if (WORD && WORD.el) WORD.el.classList.remove('hit');
+  WORD = null;
+  if (!silent) Sound.play('fold');
+}
+function placeWord(el) {
+  const pop = $('#word-pop');
+  if (!pop || !el) return;
+  pop.hidden = false;
+  const r = el.getBoundingClientRect();
+  pop.style.visibility = 'hidden';
+  const pr = pop.getBoundingClientRect();
+  let top = r.bottom + 8;
+  if (top + pr.height > innerHeight - 10) top = r.top - pr.height - 8;
+  top = clamp(top, 10, Math.max(10, innerHeight - pr.height - 10));
+  const left = clamp(r.left + r.width / 2 - pr.width / 2, 10, Math.max(10, innerWidth - pr.width - 10));
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+  pop.style.visibility = '';
+}
+function openWord(el) {
+  const segId = +el.dataset.seg, sg = IDX[segId];
+  if (!sg) return;
+  if (WORD && WORD.el === el && !$('#word-pop').hidden) return;
+  closeWord(true);
+  WORD = { segId, tok: el.textContent.trim(), el, norm: el.dataset.w };
+  const gloss = WORDS[el.dataset.w] || '';
+  $('#wp-ar').textContent = el.textContent;
+  $('#wp-fa').textContent = gloss || '—';
+  $('#wp-sub').textContent = `Passage ${segId} · ${SEC_OF[segId].fa}`;
+  const out = $('#wp-out');
+  out.hidden = true; out.innerHTML = '';
+  const m = AI.active();
+  $('#wp-model').textContent = m ? (m.free ? 'free' : 'paid') + ' · ' + shortName(m.name) : 'no model';
+  el.classList.add('hit');
+  placeWord(el);
+  Sound.play('pop');
+  buzz(4);
+}
+async function explainWord() {
+  if (!WORD) return;
+  const m = AI.active();
+  if (!m) {
+    toast('Add an AI model in Settings → Word insight', 'warn', 'spark');
+    closeWord(true); openSettings();
+    setTimeout(() => $('#ai-models')?.scrollIntoView({ block: 'center' }), 260);
+    return;
+  }
+  if (!AI.key()) {
+    toast('Add your OpenRouter key in Settings → Word insight', 'warn', 'lock');
+    closeWord(true); openSettings();
+    setTimeout(() => { $('#ai-key')?.scrollIntoView({ block: 'center' }); $('#ai-key')?.focus(); }, 260);
+    return;
+  }
+  const target = WORD;
+  const sg = IDX[target.segId];
+  const out = $('#wp-out');
+  const ck = `${m.id}|${target.segId}|${target.norm}`;
+  const hit = AI.cache()[ck];
+  Sound.play('tap');
+  if (hit) { renderAI(hit); return; }
+  out.hidden = false;
+  out.innerHTML = `<div class="wp-load"><i></i><span>${esc(shortName(m.name))} is thinking…</span></div>`;
+  if (WORD) placeWord(WORD.el);
+  try {
+    const text = await AI.call(m, aiPrompt(target.tok, sg));
+    AI.cacheSet(ck, text);
+    if (WORD !== target) return;
+    renderAI(text);
+    Sound.play('reveal');
+  } catch (e) {
+    if (WORD !== target) return;
+    out.innerHTML = `<div class="wp-err">${esc(e.message)}</div>`;
+    if (WORD) placeWord(WORD.el);
+    Sound.play('error');
+  }
+}
+
+/* ── model manager ───────────────────────────────────────────── */
+function renderAIModels() {
+  const box = $('#ai-models');
+  if (!box) return;
+  const key = AI.key();
+  const line = $('#ai-keyline');
+  if (line) {
+    line.className = 'ai-keyline' + (key ? ' ok' : '');
+    line.innerHTML = key
+      ? `${ic('lock')}Key saved on this device · ${esc(key.slice(0, 7))}…${esc(key.slice(-4))}`
+      : `${ic('lock')}No key yet — paste your OpenRouter key and save.`;
+  }
+  const inp = $('#ai-key');
+  if (inp) inp.placeholder = key ? 'Saved — paste a new key to replace' : 'sk-or-v1-…';
+  const list = AI.list();
+  if (!list.length) {
+    box.innerHTML = `<div class="ai-empty">No models yet.<br>Add a free one from OpenRouter.</div>`;
+    return;
+  }
+  box.innerHTML = list.map(m => {
+    const on = m.id === S.ai.active && m.enabled !== false;
+    return `<div class="ai-model ${on ? 'on' : ''} ${m.enabled === false ? 'off' : ''}">
+      <div class="amain"><b>${esc(shortName(m.name || m.id))}</b><code>${esc(m.id)}</code>
+        <div class="ameta"><span>${ctxLabel(m.ctx)} ctx</span><span class="${m.free ? 'free' : ''}">${esc(priceLabel(m))}</span>${m.enabled === false ? '<span>disabled</span>' : ''}</div></div>
+      <div class="abtns">
+        ${on ? `<button class="on" data-action="ai-active" title="Active model">${ic('check')}</button>`
+             : `<button data-action="ai-activate" data-id="${esc(m.id)}" title="Use this model">Use</button>`}
+        <button data-action="ai-toggle" data-id="${esc(m.id)}" title="${m.enabled === false ? 'Enable' : 'Disable'} this model">${m.enabled === false ? 'Enable' : 'Disable'}</button>
+        <button data-action="ai-del" data-id="${esc(m.id)}" title="Delete" aria-label="Delete model">${ic('trash')}</button>
+      </div></div>`;
+  }).join('');
+}
+async function aiCatalog(force) {
+  const c = loadJSON(AI_CAT_LS);
+  if (!force && c && c.at && Date.now() - c.at < 432e5 && Array.isArray(c.list)) return c.list;
+  const r = await fetch(AI_ENDPOINT + '/models');
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  const list = (j.data || []).map(m => ({
+    id: m.id,
+    name: m.name || m.id,
+    ctx: m.context_length || 0,
+    p: +m.pricing?.prompt || 0,
+    c: +m.pricing?.completion || 0,
+    free: /:free$/.test(m.id) || (+m.pricing?.prompt === 0 && +m.pricing?.completion === 0)
+  })).sort((a, b) => (b.free - a.free) || a.name.localeCompare(b.name));
+  try { localStorage.setItem(AI_CAT_LS, JSON.stringify({ at: Date.now(), list })); } catch {}
+  return list;
+}
+function renderPick(q) {
+  const box = $('#ai-pick-list');
+  if (!box) return;
+  const term = String(q || '').toLowerCase().trim();
+  const match = PICK.filter(m => !term || (m.name + ' ' + m.id).toLowerCase().includes(term));
+  const list = [...match.filter(m => m.free), ...match.filter(m => !m.free)].slice(0, 60);
+  if (!list.length) { box.innerHTML = `<div class="pick-note">No match — paste the model id below instead.</div>`; return; }
+  box.innerHTML = list.map(m => {
+    const has = (S.ai.models || []).some(x => x.id === m.id);
+    return `<div class="pick-row ${has ? 'added' : ''}">
+      <div class="amain"><b>${esc(m.name)}</b><code>${esc(m.id)}</code>
+        <div class="ameta"><span>${ctxLabel(m.ctx)} ctx</span><span class="${m.free ? 'free' : ''}">${esc(priceLabel(m))}</span></div></div>
+      <button class="btn sm" data-action="ai-pick" data-id="${esc(m.id)}" ${has ? 'disabled' : ''}>${has ? 'Added' : 'Add'}</button></div>`;
+  }).join('');
+}
+async function openModelPicker() {
+  openModal(`<button class="icon-btn modal-x" data-action="modal-close" aria-label="Close">${ic('x')}</button>
+    <h2>${ic('spark')}Add a model</h2>
+    <div class="pick-q"><input id="ai-pick-q" type="search" placeholder="Search OpenRouter models…" autocomplete="off" spellcheck="false" aria-label="Search models"></div>
+    <div class="pick-list" id="ai-pick-list"><div class="pick-note">Loading the OpenRouter catalogue…</div></div>
+    <div class="pick-q" style="display:flex;gap:6px">
+      <input id="ai-manual" type="text" placeholder="or paste a model id, e.g. deepseek/deepseek-r1:free" autocomplete="off" spellcheck="false" aria-label="Model id">
+      <button class="btn sm" data-action="ai-manual-add">Add</button>
+    </div>
+    <p class="pick-note">Free models are listed first. Rate limits and availability come from OpenRouter, not from this app.</p>`);
+  setTimeout(() => $('#ai-pick-q')?.focus(), 80);
+  try { PICK = await aiCatalog(); renderPick(''); }
+  catch (e) {
+    const box = $('#ai-pick-list');
+    if (box) box.innerHTML = `<div class="pick-note">Could not reach OpenRouter (${esc(e.message)}). Paste a model id below instead.</div>`;
+  }
+}
+function addModel(m) {
+  if (!m || !m.id) return;
+  S.ai.models = S.ai.models || [];
+  if (S.ai.models.some(x => x.id === m.id)) { toast('Already in your list', 'ok', 'check'); return; }
+  S.ai.models.push({
+    id: m.id, name: m.name || m.id, ctx: m.ctx || 0,
+    p: m.p || 0, c: m.c || 0, free: !!m.free, enabled: true, addedAt: Date.now()
+  });
+  if (!AI.active()) S.ai.active = m.id;
+  persist(); renderAIModels();
+  renderPick($('#ai-pick-q')?.value || '');
+  Sound.play('success');
+  toast('Model added', 'ok', 'spark');
+}
+
 /* ═══════════ ACTIONS ═══════════ */
 const H = {
   nav: t => navigate(t.dataset.view),
@@ -1612,7 +1904,63 @@ const H = {
     Sound.play('close');
     r && r(true);
   },
-  retry: () => location.reload()
+  retry: () => location.reload(),
+  'word-close': () => closeWord(),
+  'word-ai': () => explainWord(),
+  'ai-key-save': () => {
+    const v = ($('#ai-key')?.value || '').trim();
+    if (!v) { toast('Paste your OpenRouter key first', 'warn', 'lock'); return; }
+    if (!/^sk-or-/.test(v)) { toast('That does not look like an OpenRouter key (sk-or-…)', 'warn', 'alert'); return; }
+    if (!AI.setKey(v)) { toast('This browser blocks local storage', 'err', 'alert'); return; }
+    $('#ai-key').value = '';
+    renderAIModels(); Sound.play('success');
+    toast('Key saved on this device only', 'ok', 'lock');
+  },
+  'ai-key-clear': () => {
+    AI.setKey('');
+    const inp = $('#ai-key'); if (inp) inp.value = '';
+    renderAIModels(); Sound.play('tap');
+    toast('Key removed', 'ok', 'trash');
+  },
+  'ai-add': () => openModelPicker(),
+  'ai-active': () => Sound.play('tap'),
+  'ai-activate': t => {
+    S.ai.active = t.dataset.id;
+    const m = AI.list().find(x => x.id === t.dataset.id);
+    if (m) m.enabled = true;
+    persist(); renderAIModels(); Sound.play('pop');
+  },
+  'ai-toggle': t => {
+    const m = AI.list().find(x => x.id === t.dataset.id);
+    if (!m) return;
+    m.enabled = m.enabled === false;
+    if (m.enabled === false && S.ai.active === m.id) {
+      const alt = AI.list().find(x => x.enabled !== false);
+      S.ai.active = alt ? alt.id : null;
+    }
+    persist(); renderAIModels(); Sound.play('tap');
+  },
+  'ai-del': async t => {
+    const m = AI.list().find(x => x.id === t.dataset.id);
+    if (!m) return;
+    const ok = await confirmBox({ title: 'Delete model?', body: `Remove ${m.name || m.id} from your list?`, ok: 'Delete', danger: true });
+    if (!ok) return;
+    S.ai.models = AI.list().filter(x => x.id !== m.id);
+    if (S.ai.active === m.id) { const alt = AI.list().find(x => x.enabled !== false); S.ai.active = alt ? alt.id : null; }
+    persist(); renderAIModels(); renderPick($('#ai-pick-q')?.value || '');
+    Sound.play('tap'); toast('Model removed', 'ok', 'trash');
+  },
+  'ai-pick': t => {
+    const m = PICK.find(x => x.id === t.dataset.id) || { id: t.dataset.id, name: t.dataset.id };
+    addModel(m);
+  },
+  'ai-manual-add': () => {
+    const id = ($('#ai-manual')?.value || '').trim();
+    if (!id.includes('/')) { toast('A model id looks like owner/model', 'warn', 'alert'); return; }
+    const known = PICK.find(x => x.id === id);
+    addModel(known || { id, name: id, free: /:free$/.test(id) });
+    if ($('#ai-manual')) $('#ai-manual').value = '';
+  }
 };
 const SELF_SOUND = new Set([
   'seg-read', 'seg-bm', 'seg-play', 'seg-note', 'seg-copy', 'note-edit', 'note-save', 'note-del', 'bm-remove', 'note-del-lib',
@@ -1620,7 +1968,9 @@ const SELF_SOUND = new Set([
   'focus', 'autoscroll', 'modal-close', 'confirm-ok', 'close-search', 'close-palette', 'close-settings', 'close-auth',
   'close-controls', 'open-search', 'open-palette', 'open-settings', 'open-about', 'open-auth', 'open-controls',
   'lib-tab', 'export', 'resend', 'auth-tab', 'eye', 'sec-read', 'account', 'continue', 'begin', 'daily', 'jump',
-  'nav', 'reset-data', 'coach-dismiss', 'copy-sql', 'sync-info', 'sync-now', 'mark-chapter'
+  'nav', 'reset-data', 'coach-dismiss', 'copy-sql', 'sync-info', 'sync-now', 'mark-chapter',
+  'word-close', 'word-ai', 'ai-add', 'ai-active', 'ai-activate', 'ai-toggle', 'ai-del', 'ai-pick',
+  'ai-key-save', 'ai-key-clear', 'ai-manual-add'
 ]);
 
 /* ═══════════ EVENTS ═══════════ */
@@ -1629,6 +1979,8 @@ const anyOverlay = () => isOpen('#palette') || isOpen('#search-overlay') || isOp
   isOpen('#controls') || !!$('#modal-root').innerHTML;
 
 document.addEventListener('click', e => {
+  const wd = e.target.closest('.seg .w');
+  if (wd) { openWord(wd); return; }
   const pal = e.target.closest('[data-pal]');
   if (pal) { palRun(+pal.dataset.pal); return; }
   const t = e.target.closest('[data-action]');
@@ -1659,6 +2011,7 @@ document.addEventListener('input', e => {
   if (t.dataset.ctl === 'auto') { toggleAutoScroll(); return; }
   if (t.id === 'search-input') { doSearch(t.value); return; }
   if (t.id === 'palette-input') { renderPalette(t.value); return; }
+  if (t.id === 'ai-pick-q') { renderPick(t.value); return; }
   const k = t.dataset.set;
   if (!k) return;
   const v = t.type === 'checkbox' ? t.checked
@@ -1693,6 +2046,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Escape') {
+    if (WORD) { closeWord(); return; }
     if ($('#modal-root').innerHTML) closeModal();
     else if (isOpen('#controls')) closeControls();
     else if (isOpen('#palette')) closePalette();
@@ -1768,7 +2122,18 @@ async function init() {
   FX.init();
   bindAuthForms();
   bindImport();
-  addEventListener('hashchange', () => render());
+  addEventListener('hashchange', () => { closeWord(true); render(); });
+  addEventListener('resize', () => closeWord(true));
+  addEventListener('scroll', e => {
+    if (!WORD) return;
+    if (e.target instanceof Element && e.target.closest('#word-pop')) return;
+    closeWord(true);
+  }, { passive: true, capture: true });
+  document.addEventListener('pointerdown', e => {
+    if (!WORD) return;
+    if (e.target.closest('#word-pop') || e.target.closest('.seg .w')) return;
+    closeWord(true);
+  }, true);
 
   if ('speechSynthesis' in window) {
     speechSynthesis.getVoices();

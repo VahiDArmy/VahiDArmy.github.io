@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&family=Scheherazade+New:wght@400;700&family=Sora:wght@300;400;600;700;800&family=Vazirmatn:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=1.5">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b18'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23e6b95c' stroke-width='2.5'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%234fd1b5'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -210,6 +210,23 @@
       <div class="set-row"><label for="set-rate">Recitation speed</label><input id="set-rate" type="range" data-set="ttsRate" min="0.5" max="1.3" step="0.05"></div>
     </section>
 
+    <section class="set-sec" id="ai-sec">
+      <h3>Word insight · AI</h3>
+      <p class="set-note"><svg class="ic"><use href="#i-spark"/></svg>Tap any Arabic word for its Persian gloss. The spark button then explains its meaning here, its root (جذر) and its grammar with a free OpenRouter model. Your key stays in this browser only.</p>
+      <div class="set-row"><label for="ai-key">OpenRouter key</label>
+        <div class="ai-keybox">
+          <input id="ai-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false" aria-label="OpenRouter API key">
+          <button class="btn sm" data-action="ai-key-save">Save</button>
+          <button class="icon-btn" data-action="ai-key-clear" aria-label="Remove key" data-tip="Remove key"><svg class="ic"><use href="#i-trash"/></svg></button>
+        </div>
+      </div>
+      <div class="ai-keyline" id="ai-keyline"></div>
+      <div class="ai-models-head"><b>Models</b><button class="btn sm" data-action="ai-add">
+        <svg class="ic"><use href="#i-spark"/></svg>Add model</button></div>
+      <div class="ai-models" id="ai-models"></div>
+      <p class="set-note"><svg class="ic"><use href="#i-info"/></svg>One model is active at a time. Free models are marked <b>free</b>; rate limits are set by OpenRouter.</p>
+    </section>
+
     <section class="set-sec">
       <h3>Your data</h3>
       <div class="btn-col">
@@ -285,10 +302,26 @@
   </div>
 </div>
 
+<!-- ── word meaning popup ─────────────────────────────────────── -->
+<div id="word-pop" class="word-pop" hidden role="dialog" aria-label="Word meaning">
+  <div class="wp-head">
+    <span class="wp-ar" id="wp-ar" dir="rtl" lang="ar"></span>
+    <button class="icon-btn" data-action="word-close" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="wp-fa" id="wp-fa" dir="rtl" lang="fa"></div>
+  <div class="wp-sub" id="wp-sub"></div>
+  <button class="wp-ai" data-action="word-ai">
+    <svg class="ic"><use href="#i-spark"/></svg>
+    <span>Explain: root &amp; grammar</span>
+    <small id="wp-model"></small>
+  </button>
+  <div class="wp-out" id="wp-out" hidden></div>
+</div>
+
 <div id="modal-root"></div>
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 
 <noscript><p style="padding:40px;text-align:center">Nūr needs JavaScript to display the duʿāʾ.</p></noscript>
-<script src="app.js"></script>
+<script src="app.js?v=1.5"></script>
 </body>
 </html>
